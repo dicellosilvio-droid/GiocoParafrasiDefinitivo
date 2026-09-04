@@ -22,7 +22,7 @@ export default async function handler(req, res) {
   }
 
   if (!process.env.ANTHROPIC_API_KEY) {
-    return res.status(500).json({ errore: "Manca la chiave ANTHROPIC_API_KEY nelle variabili d'ambiente." });
+    return res.status(500).json({ errore: "Manca la chiave ANTHROPIC_API_KEY nelle variabili d'ambiente su Vercel." });
   }
 
   const prompt = `Sei un insegnante di lettere che valuta la parafrasi di uno studente.
@@ -31,9 +31,10 @@ Concetti chiave attesi: ${verso.concetti || "nessuno specificato, valuta la comp
 Parafrasi dello studente: "${parafrasi.trim()}"
 
 Valuta quanto la parafrasi sia fedele e completa rispetto ai concetti chiave, indipendentemente dalle parole usate. Non dare un punteggio alto a risposte solo superficialmente simili al verso ma che non ne colgono il significato.
-Rispondi SOLO con un oggetto JSON, senza testo aggiuntivo, in questo formato esatto:
+Rispondi SOLO con un oggetto JSON, senza testo aggiuntivo prima o dopo, in questo formato esatto:
 {"punteggio": numero intero da 0 a 10, "feedback": "una frase di massimo 25 parole in italiano, rivolta allo studente"}`;
 
+  let corpoRisposta;
   try {
     const rispostaClaude = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -49,26 +50,43 @@ Rispondi SOLO con un oggetto JSON, senza testo aggiuntivo, in questo formato esa
       })
     });
 
+    corpoRisposta = await rispostaClaude.text();
+
     if (!rispostaClaude.ok) {
-      const dettaglio = await rispostaClaude.text();
-      throw new Error("Errore dal servizio di valutazione: " + dettaglio);
+      // Mostriamo lo stato HTTP: 401 = chiave sbagliata, 429 = troppe richieste, 400 = richiesta malformata.
+      return res.status(500).json({
+        errore: `Il servizio di valutazione ha risposto con errore ${rispostaClaude.status}. Dettaglio: ${corpoRisposta.slice(0, 300)}`
+      });
     }
 
-    const dati = await rispostaClaude.json();
+    const dati = JSON.parse(corpoRisposta);
     const testoGrezzo = dati.content.map((blocco) => blocco.text || "").join("").trim();
-    const pulito = testoGrezzo.replace(/```json|```/g, "").trim();
-    const valutazione = JSON.parse(pulito);
 
-    const punteggio = Math.max(0, Math.min(10, Math.round(valutazione.punteggio)));
+    // Estrae il primo oggetto JSON presente nel testo, anche se il modello
+    // avesse aggiunto per errore del testo prima o dopo.
+    const corrispondenza = testoGrezzo.match(/\{[\s\S]*\}/);
+    if (!corrispondenza) {
+      return res.status(500).json({
+        errore: `Risposta dell'AI non riconosciuta: "${testoGrezzo.slice(0, 200)}"`
+      });
+    }
+
+    const valutazione = JSON.parse(corrispondenza[0]);
+    const punteggio = Math.max(0, Math.min(10, Math.round(Number(valutazione.punteggio))));
+
+    if (Number.isNaN(punteggio)) {
+      return res.status(500).json({ errore: "Il punteggio restituito dall'AI non era un numero valido." });
+    }
+
     aggiornaPunteggio(codice, nome, punteggio);
 
     res.status(200).json({
       punteggio,
-      feedback: valutazione.feedback,
+      feedback: valutazione.feedback || "Nessun commento disponibile.",
       classifica: classifica(codice)
     });
   } catch (errore) {
     console.error(errore);
-    res.status(500).json({ errore: "Non e' stato possibile valutare la parafrasi. Riprova." });
+    res.status(500).json({ errore: `Errore imprevisto: ${errore.message}` });
   }
 }
