@@ -1,0 +1,80 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  background: #F7F6F2;
+  color: #2C2C2A;
+}
+
+.contenitore {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+}
+
+h1 { font-size: 26px; font-weight: 600; margin: 0 0 8px; }
+h2 { font-size: 20px; font-weight: 600; margin: 0 0 16px; }
+p.sottotitolo { color: #5F5E5A; margin: 0 0 32px; }
+
+.scheda {
+  background: #FFFFFF;
+  border: 1px solid #E3E1D8;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+
+input[type="text"], textarea {
+  width: 100%;
+  border: 1px solid #D3D1C7;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 15px;
+  font-family: inherit;
+  margin-bottom: 16px;
+}
+
+textarea { resize: vertical; }
+
+button {
+  background: #26215C;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button.secondario { background: transparent; color: #26215C; border: 1px solid #26215C; }
+
+.codice-partita {
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  text-align: center;
+  padding: 20px;
+  background: #EEEDFE;
+  color: #26215C;
+  border-radius: 12px;
+  margin: 20px 0;
+}
+
+.riga-classifica {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border: 1px solid #E3E1D8;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.errore { color: #A32D2D; font-size: 14px; margin: -10px 0 16px; }
+.timer { font-weight: 600; }
+.verso { font-family: Georgia, serif; font-size: 19px; line-height: 1.6; }
+.punteggio-grande { font-size: 32px; font-weight: 700; margin: 0 0 8px; }
